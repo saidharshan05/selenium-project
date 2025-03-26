@@ -4,8 +4,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import NoSuchElementException
-from selenium.common.exceptions import NoAlertPresentException
+from selenium.common.exceptions import NoSuchElementException, NoAlertPresentException
 from time import sleep
 #from selenium.webdriver.chrome.service import Service as ChromeService
 #from webdriver_manager.chrome import ChromeDriverManager
@@ -13,6 +12,7 @@ from time import sleep
 
 
 chrome_options = Options()
+chrome_options.add_argument('--headless=new')
 chrome_options.platform_name = 'any'
 chrome_options.add_argument("start-maximized")
 
@@ -101,7 +101,7 @@ try:
 
 except NoSuchElementException:
     print("⚠️ The specified div was not found.")
-driver.save_screenshot("./about.png")
+driver.save_screenshot("./ContactModel.png")
 
 
 
@@ -123,11 +123,64 @@ driver.find_element(By.XPATH, "//*[@id='exampleModal']//button[contains(text(), 
 
 # Accept the alert
 try:
-    WebDriverWait(driver, 5).until(EC.alert_is_present())
+    WebDriverWait(driver, 4).until(EC.alert_is_present())
     alert = driver.switch_to.alert
     alert.accept() 
     print("✅ Alert accepted successfully!")
 
 except NoAlertPresentException:
         print("❌ No alert was present after form submission.")
+
+
+#select category
+laptops_button = driver.find_element(By.XPATH, "//a[@id='itemc' and contains(text(), 'Monitors')]")
+laptops_button.click()
+WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "tbodyid")))
+category_loaded = driver.execute_script("return arguments[0].getAttribute('onclick');", laptops_button)
+expected_category = "monitor" 
+actual_category = category_loaded.split("'")[1] 
+
+
+# Verify if the correct category is loaded
+assert expected_category == actual_category, f"Expected '{expected_category}', but got '{actual_category}'"
+sleep(2)
+wait.until(EC.visibility_of(driver.find_element(By.XPATH, "//*[@id='tbodyid']//img")))
+try:
+    parent_div = driver.find_element(By.ID, "tbodyid")  
+    div_content = parent_div.get_attribute("innerText").lower()  
+
+    if not "phone" in div_content or "notebook" in div_content:
+        print("✅ The Monitor filter successfully applied")
+    else:
+        print("❌ The string 'phone' & 'notebook' is present in the div and its children.")
+
+except NoSuchElementException:
+    print("⚠️ The specified div was not found.")
+driver.save_screenshot("./monitorfilter.png")
+
+
+#select cart section
+
+driver.find_element(By.XPATH, "//*[@id='navbarExample']//a[contains(text(), 'Cart')]").click()
+try:
+    cart_title = driver.find_element(By.ID, "page-wrapper")
+    if cart_title.is_displayed():
+        print(f"✅ Cart section found")
+    else:
+        print("❌ Cart section not visible")
+except NoSuchElementException:
+    print("⚠️ The specified div was not found.")
+driver.save_screenshot("./Cart.png")
+
+
+
+
+
+
+
+
+
+
+
+
 driver.quit()
